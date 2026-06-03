@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LangBot</title>
+    <script data-title="LangBot" src="http://192.168.3.19:5300/api/v1/embed/4858f856-dea0-4559-8144-b734e73e55ee/widget.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .container {
+            text-align: center;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            max-width: 600px;
+            width: 90%;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 16px;
+            font-size: 2em;
+        }
+        p {
+            color: #666;
+            margin-bottom: 24px;
+            line-height: 1.6;
+        }
+        .loading {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .error {
+            color: #e74c3c;
+            background: #fde8e8;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 16px;
+            text-align: left;
+            font-size: 14px;
+        }
+        .error code {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .status {
+            margin-top: 16px;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .status.success {
+            background: #e8fde8;
+            color: #27ae60;
+        }
+        .status.loading {
+            background: #e8e8fd;
+            color: #667eea;
+        }
+        .status.error {
+            background: #fde8e8;
+            color: #e74c3c;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>LangBot</h1>
+        <p>正在加载 LangBot 聊天组件...</p>
+        <div class="loading" id="loading"></div>
+        <div id="status"></div>
+        <div id="error" class="error" style="display: none;"></div>
+    </div>
+
+    <script>
+        const statusEl = document.getElementById('status');
+        const loadingEl = document.getElementById('loading');
+        const errorEl = document.getElementById('error');
+
+        // 检查 widget 是否加载成功
+        window.addEventListener('load', function() {
+            // 等待一小段时间让 widget 初始化
+            setTimeout(function() {
+                // 如果 widget 加载成功，它会替换或隐藏 loading 元素
+                // 如果仍然显示 loading，说明加载失败
+                if (loadingEl.style.display !== 'none') {
+                    loadingEl.style.display = 'none';
+                    statusEl.className = 'status error';
+                    statusEl.textContent = 'LangBot 聊天组件加载失败';
+                    errorEl.style.display = 'block';
+                    errorEl.innerHTML = `
+                        <strong>可能的原因：</strong><br><br>
+                        1. Bot UUID <code>4858f856-dea0-4559-8144-b734e73e55ee</code> 未启用<br>
+                        2. LangBot 服务器 <code>192.168.3.19:5300</code> 未运行<br><br>
+                        <strong>解决方法：</strong><br>
+                        1. 登录 LangBot 管理面板<br>
+                        2. 找到"页面机器人"并启用它<br>
+                        3. 确保 Bot 已绑定 Workflow/Pipeline<br>
+                        4. 刷新此页面
+                    `;
+                }
+            }, 3000);
+        });
+    </script>
+</body>
+</html>
