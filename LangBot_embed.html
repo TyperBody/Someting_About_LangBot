@@ -3,127 +3,365 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LangBot</title>
-    <script data-title="LangBot" src="http://192.168.3.19:5300/api/v1/embed/4858f856-dea0-4559-8144-b734e73e55ee/widget.js"></script>
+    <title>LangBot 嵌入加载器</title>
+    <!--
+        使用说明:
+        1. 在 LangBot 后台找到机器人的「嵌入代码」,复制形如:
+           <script data-title="LangBot" src="http://xxx:5300/api/v1/embed/<uuid>/widget.js"></script>
+        2. 粘贴到下方输入框,点击「加载」即可在本页面渲染小组件。
+        3. 输入会自动保存到浏览器 localStorage,下次打开会回填(默认不自动加载)。
+        4. 若切换实例后旧组件未消失,请点击「清除」或刷新页面。
+    -->
     <style>
-        * {
+        * { box-sizing: border-box; }
+        html, body {
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+                         "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+            background: #f5f7fa;
+            color: #1f2937;
             min-height: 100vh;
+        }
+        .panel {
+            max-width: 880px;
+            margin: 24px auto;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            padding: 20px 24px;
+        }
+        .panel h1 {
+            margin: 0 0 4px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .panel .desc {
+            margin: 0 0 16px;
+            font-size: 13px;
+            color: #6b7280;
+        }
+        textarea#script-input {
+            width: 100%;
+            min-height: 96px;
+            padding: 10px 12px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            color: #111827;
+            background: #f9fafb;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        textarea#script-input:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+            background: #ffffff;
+        }
+        .controls {
+            margin-top: 12px;
             display: flex;
-            justify-content: center;
+            flex-wrap: wrap;
             align-items: center;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            gap: 10px;
         }
-        .container {
-            text-align: center;
-            padding: 40px;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 16px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-            max-width: 600px;
-            width: 90%;
-        }
-        h1 {
-            color: #333;
-            margin-bottom: 16px;
-            font-size: 2em;
-        }
-        p {
-            color: #666;
-            margin-bottom: 24px;
-            line-height: 1.6;
-        }
-        .loading {
-            display: inline-block;
-            width: 40px;
-            height: 40px;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .error {
-            color: #e74c3c;
-            background: #fde8e8;
-            padding: 16px;
-            border-radius: 8px;
-            margin-top: 16px;
-            text-align: left;
+        button {
             font-size: 14px;
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s, color 0.15s;
         }
-        .error code {
-            background: #f0f0f0;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-family: monospace;
+        button.primary {
+            background: #2563eb;
+            color: #ffffff;
         }
+        button.primary:hover { background: #1d4ed8; }
+        button.secondary {
+            background: #ffffff;
+            color: #374151;
+            border-color: #d1d5db;
+        }
+        button.secondary:hover {
+            background: #f3f4f6;
+            border-color: #9ca3af;
+        }
+        .auto-load {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #4b5563;
+            user-select: none;
+            cursor: pointer;
+        }
+        .auto-load input { cursor: pointer; }
         .status {
-            margin-top: 16px;
-            padding: 12px;
+            margin-top: 12px;
+            padding: 10px 12px;
+            font-size: 13px;
             border-radius: 8px;
-            font-size: 14px;
+            background: #f3f4f6;
+            color: #4b5563;
+            word-break: break-all;
+            min-height: 20px;
         }
         .status.success {
-            background: #e8fde8;
-            color: #27ae60;
-        }
-        .status.loading {
-            background: #e8e8fd;
-            color: #667eea;
+            background: #ecfdf5;
+            color: #047857;
+            border: 1px solid #a7f3d0;
         }
         .status.error {
-            background: #fde8e8;
-            color: #e74c3c;
+            background: #fef2f2;
+            color: #b91c1c;
+            border: 1px solid #fecaca;
+        }
+        .status.info {
+            background: #eff6ff;
+            color: #1d4ed8;
+            border: 1px solid #bfdbfe;
+        }
+        #widget-container {
+            /* widget.js 通常会把按钮/iframe 挂到 body 上,这里仅作为脚本节点的容器 */
+            position: relative;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>LangBot</h1>
-        <p>正在加载 LangBot 聊天组件...</p>
-        <div class="loading" id="loading"></div>
-        <div id="status"></div>
-        <div id="error" class="error" style="display: none;"></div>
-    </div>
+    <section class="panel">
+        <h1>LangBot 嵌入加载器</h1>
+        <p class="desc">
+            粘贴 LangBot 后台提供的
+            <code>&lt;script data-title="..." src="..."&gt;&lt;/script&gt;</code>
+            标签到下方,点击「加载」即可在此页面渲染小组件。
+        </p>
+
+        <textarea id="script-input"
+                  placeholder='例如:&#10;&lt;script data-title=&quot;LangBot&quot; src=&quot;http://192.168.3.19:5300/api/v1/embed/4858f856-dea0-4559-8144-b734e73e55ee/widget.js&quot;&gt;&lt;/script&gt;'
+                  spellcheck="false"></textarea>
+
+        <div class="controls">
+            <button id="btn-load" class="primary" type="button">加载</button>
+            <button id="btn-clear" class="secondary" type="button">清除</button>
+            <button id="btn-reload" class="secondary" type="button" title="完全重载页面以彻底清理小组件">刷新页面</button>
+            <label class="auto-load">
+                <input type="checkbox" id="chk-auto"> 下次打开时自动加载
+            </label>
+        </div>
+
+        <div id="status" class="status">尚未加载任何小组件。</div>
+    </section>
+
+    <div id="widget-container"></div>
 
     <script>
-        const statusEl = document.getElementById('status');
-        const loadingEl = document.getElementById('loading');
-        const errorEl = document.getElementById('error');
+        (function () {
+            'use strict';
 
-        // 检查 widget 是否加载成功
-        window.addEventListener('load', function() {
-            // 等待一小段时间让 widget 初始化
-            setTimeout(function() {
-                // 如果 widget 加载成功，它会替换或隐藏 loading 元素
-                // 如果仍然显示 loading，说明加载失败
-                if (loadingEl.style.display !== 'none') {
-                    loadingEl.style.display = 'none';
-                    statusEl.className = 'status error';
-                    statusEl.textContent = 'LangBot 聊天组件加载失败';
-                    errorEl.style.display = 'block';
-                    errorEl.innerHTML = `
-                        <strong>可能的原因：</strong><br><br>
-                        1. Bot UUID <code>4858f856-dea0-4559-8144-b734e73e55ee</code> 未启用<br>
-                        2. LangBot 服务器 <code>192.168.3.19:5300</code> 未运行<br><br>
-                        <strong>解决方法：</strong><br>
-                        1. 登录 LangBot 管理面板<br>
-                        2. 找到"页面机器人"并启用它<br>
-                        3. 确保 Bot 已绑定 Workflow/Pipeline<br>
-                        4. 刷新此页面
-                    `;
+            // -------- 常量 --------
+            var STORAGE_KEY_INPUT = 'langbot_embed_loader.input';
+            var STORAGE_KEY_AUTO  = 'langbot_embed_loader.autoLoad';
+            var INJECTED_SCRIPT_ID = 'langbot-injected-script';
+
+            // -------- DOM --------
+            var $input   = document.getElementById('script-input');
+            var $btnLoad = document.getElementById('btn-load');
+            var $btnClr  = document.getElementById('btn-clear');
+            var $btnRld  = document.getElementById('btn-reload');
+            var $chkAuto = document.getElementById('chk-auto');
+            var $status  = document.getElementById('status');
+            var $mount   = document.getElementById('widget-container');
+
+            // -------- 状态显示 --------
+            function setStatus(message, type) {
+                $status.textContent = message;
+                $status.className = 'status' + (type ? ' ' + type : '');
+            }
+
+            // -------- localStorage --------
+            function saveToStorage(input, autoLoad) {
+                try {
+                    if (typeof input === 'string') {
+                        localStorage.setItem(STORAGE_KEY_INPUT, input);
+                    }
+                    if (typeof autoLoad === 'boolean') {
+                        localStorage.setItem(STORAGE_KEY_AUTO, autoLoad ? '1' : '0');
+                    }
+                } catch (e) {
+                    // 隐私模式或被禁用时静默失败
                 }
-            }, 3000);
-        });
+            }
+
+            function loadFromStorage() {
+                var input = '';
+                var autoLoad = false;
+                try {
+                    input = localStorage.getItem(STORAGE_KEY_INPUT) || '';
+                    autoLoad = localStorage.getItem(STORAGE_KEY_AUTO) === '1';
+                } catch (e) { /* ignore */ }
+                return { input: input, autoLoad: autoLoad };
+            }
+
+            // -------- 解析 <script> 标签 --------
+            // 优先用 DOMParser,失败时回退正则
+            function parseScriptTag(raw) {
+                var text = (raw || '').trim();
+                if (!text) {
+                    return { error: '输入为空,请粘贴完整的 <script> 标签(形如 <script src="..."><\/script>)。' };
+                }
+
+                // 用户可能只粘贴了 URL,做容错
+                if (/^https?:\/\/\S+$/i.test(text)) {
+                    return { src: text, title: 'LangBot' };
+                }
+
+                // 尝试用 DOMParser 解析
+                try {
+                    var doc = new DOMParser().parseFromString(
+                        '<div>' + text + '</div>', 'text/html'
+                    );
+                    var script = doc.querySelector('script');
+                    if (script) {
+                        var src = script.getAttribute('src') || '';
+                        var title = script.getAttribute('data-title') || 'LangBot';
+                        if (src) {
+                            return { src: src, title: title };
+                        }
+                    }
+                } catch (e) { /* fallthrough */ }
+
+                // 回退:正则提取
+                var srcMatch = text.match(/\bsrc\s*=\s*["']([^"']+)["']/i);
+                var titleMatch = text.match(/\bdata-title\s*=\s*["']([^"']+)["']/i);
+                if (srcMatch && srcMatch[1]) {
+                    return {
+                        src: srcMatch[1],
+                        title: (titleMatch && titleMatch[1]) || 'LangBot'
+                    };
+                }
+
+                return { error: '无法识别脚本标签,请确认粘贴的是完整的 <script src="..."><\/script>。' };
+            }
+
+            // -------- URL 校验 --------
+            function validateSrc(src) {
+                if (!src) return '脚本 src 为空。';
+                try {
+                    var u = new URL(src, window.location.href);
+                    if (u.protocol !== 'http:' && u.protocol !== 'https:') {
+                        return '只允许 http/https 协议,检测到:' + u.protocol;
+                    }
+                    return null;
+                } catch (e) {
+                    return 'src 不是合法的 URL:' + src;
+                }
+            }
+
+            // -------- 清理上次注入 --------
+            function cleanupPreviousWidget() {
+                // 1. 移除自己注入的 script 节点
+                var old = document.getElementById(INJECTED_SCRIPT_ID);
+                if (old && old.parentNode) {
+                    old.parentNode.removeChild(old);
+                }
+                // 2. 尝试移除 LangBot widget 创建的 DOM(按 id/class 中包含 langbot 的特征匹配)
+                //    不同版本的 widget.js DOM 结构可能不同,这里尽力清理,失败时建议用户刷新。
+                try {
+                    var selectors = [
+                        '[id^="langbot"]',
+                        '[class*="langbot"]',
+                        'iframe[src*="/api/v1/embed/"]'
+                    ];
+                    selectors.forEach(function (sel) {
+                        document.querySelectorAll(sel).forEach(function (node) {
+                            // 排除我们自己的面板内的元素
+                            if (node.closest && node.closest('.panel')) return;
+                            if (node.parentNode) node.parentNode.removeChild(node);
+                        });
+                    });
+                } catch (e) { /* 忽略清理失败 */ }
+            }
+
+            // -------- 注入新 script --------
+            function injectScript(src, title) {
+                cleanupPreviousWidget();
+
+                var s = document.createElement('script');
+                s.id = INJECTED_SCRIPT_ID;
+                s.src = src;
+                if (title) s.setAttribute('data-title', title);
+                s.async = true;
+
+                s.onload = function () {
+                    setStatus('✅ 已加载:' + (title ? '[' + title + '] ' : '') + src, 'success');
+                };
+                s.onerror = function () {
+                    setStatus('❌ 脚本加载失败,请检查 URL 是否可达:' + src, 'error');
+                };
+
+                $mount.appendChild(s);
+                setStatus('⏳ 正在加载:' + src, 'info');
+            }
+
+            // -------- 主流程 --------
+            function handleLoad() {
+                var raw = $input.value;
+                var parsed = parseScriptTag(raw);
+                if (parsed.error) {
+                    setStatus('⚠️ ' + parsed.error, 'error');
+                    return;
+                }
+                var err = validateSrc(parsed.src);
+                if (err) {
+                    setStatus('⚠️ ' + err, 'error');
+                    return;
+                }
+                saveToStorage(raw, null);
+                injectScript(parsed.src, parsed.title);
+            }
+
+            function handleClear() {
+                $input.value = '';
+                cleanupPreviousWidget();
+                saveToStorage('', null);
+                setStatus('已清除当前小组件与输入。', 'info');
+            }
+
+            function handleReload() {
+                window.location.reload();
+            }
+
+            // -------- 事件绑定 --------
+            $btnLoad.addEventListener('click', handleLoad);
+            $btnClr.addEventListener('click', handleClear);
+            $btnRld.addEventListener('click', handleReload);
+            $chkAuto.addEventListener('change', function () {
+                saveToStorage(null, $chkAuto.checked);
+            });
+            // Ctrl/Cmd + Enter 快捷键加载
+            $input.addEventListener('keydown', function (e) {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                    e.preventDefault();
+                    handleLoad();
+                }
+            });
+
+            // -------- 初始化 --------
+            var saved = loadFromStorage();
+            if (saved.input) {
+                $input.value = saved.input;
+            }
+            $chkAuto.checked = saved.autoLoad;
+            if (saved.autoLoad && saved.input) {
+                // 自动加载(若开启)
+                setTimeout(handleLoad, 0);
+            }
+        })();
     </script>
 </body>
 </html>
